@@ -1,57 +1,100 @@
-import { launch } from "puppeteer";
-import AWS = require("aws-sdk");
+import dotenv = require("dotenv");
+dotenv.config();
 
-const sns = new AWS.SNS({ region: "us-east-1" });
+import express = require("express");
+import compression = require("compression");
+import bodyParser = require("body-parser");
+import path = require("path");
+import { doQuery, sql, getConnection } from "@fernap3/sql";
+const getRandomValues = require("get-random-values");
 
-const locationNames = [
-	"Javits Center",
-	"Jones Beach - Field 3",
-	"State Fair Expo Center: NYS Fairgrounds",
-	"SUNY Albany",
-	"Westchester County Center",
-	"SUNY Stony Brook University Innovation and Discovery Center",
-	"SUNY Potsdam Field House",
-	"Aqueduct Racetrack - Racing Hall",
-	"Plattsburgh International Airport -Connecticut Building",
-	"SUNY Binghamton",
-	"SUNY Polytechnic Institute - Wildcat Field House",
-	"University at Buffalo South Campus - Harriman Hall",
-	"Rochester Dome Arena",
+function guid(): string
+{
+	return ((<any>[1e7])+-1e3+-4e3+-8e3+-1e11).replace(/[018]/g, (c: any) =>
+		(c ^ getRandomValues(new Uint8Array(1))[0] & 15 >> c / 4).toString(16)
+	)
+}
+
+const server = express();
+express.static.mime.define({"application/manifest+json": ["webmanifest"]});
+
+if(process.env.NODE_ENV === "production")
+{
+	server.use((req, res, next) =>
+	{
+		// Redirect HTTP to HTTPS
+		if (req.header("x-forwarded-proto") !== "https")
+			res.redirect(`https://${req.header("host")}${req.url}`);
+		else
+			next();
+	})
+}
+
+server.disable("x-powered-by");
+server.use(compression());
+server.use(bodyParser.json());
+
+const allLocations = [
+	{ name: "Javits Center", id: "JAVITS", },
+	{ name: "Jones Beach - Field 3", id: "JONES", },
+	{ name: "State Fair Expo Center: NYS Fairgrounds", id: "FAIR", },
+	{ name: "SUNY Albany", id: "ALBANY", },
+	{ name: "Westchester County Center", id: "WESTCHESTER", },
+	{ name: "SUNY Stony Brook University Innovation and Discovery Center", id: "STONYBROOK", },
+	{ name: "SUNY Potsdam Field House", id: "POTSDAM", },
+	{ name: "Aqueduct Racetrack - Racing Hall", id: "AQUEDUCT", },
+	{ name: "Plattsburgh International Airport -Connecticut Building", id: "PLATTSBURGH", },
+	{ name: "SUNY Binghamton", id: "BINGHAMTON", },
+	{ name: "SUNY Polytechnic Institute - Wildcat Field House", id: "POLYTECHNIC", },
+	{ name: "University at Buffalo South Campus - Harriman Hall", id: "BUFFALO", },
+	{ name: "Rochester Dome Arena", id: "ROCHESTER", },
 ];
 
-(async () =>
+server.get("/", (req, res) =>
 {
-	const browser = await launch({ headless: false, ignoreHTTPSErrors: true });
-	const page = await browser.newPage();
+	res.sendFile(path.join(__dirname, "index.html"));
+});
 
-	await page.goto("https://virtualqueue4.ny.gov");
+server.post("/subscription", async (req, res) =>
+{
+	const { phone, locations, } = req.body;
 
-	// Wait for the table of locations to load
-	await page.waitForFunction(() => { return [...document.querySelectorAll("#statePods_table td")].some(e => e.textContent.includes("Javits")) });
-
-	const tableRows = await page.$$("#statePods_table > tbody > tr");
-	
-	const locations = [] as { location: string, available: boolean }[];
-
-	for (const tableRow of tableRows)
+	if (typeof phone !== "string" || phone.match(/^[0-9]{10}$/) == null)
 	{
-		const placeName = await tableRow.evaluate(row => row.children[0].textContent);
-		const appointmentsAvailableText = await tableRow.evaluate(row => row.children[2].textContent);
-		
-		locations.push({ location: placeName, available: appointmentsAvailableText?.toLowerCase()?.trim() === "appointments available" })
+		res.status(400).send("Property 'phone' must be a 10-digit string of numbers");
+		return;
 	}
 
-	const locationsWithAvailability = locations.filter(l => l.available);
-
-	if (locationsWithAvailability.find(l => l.location === "SUNY Binghamton"))
+	if (locations == null || !locations.length || !locations.every((locationId: string) => allLocations.find(l => l.id === locationId)))
 	{
-		console.log("alerting")
-		await sns.publish({
-			TopicArn: "arn:aws:sns:us-east-1:335841285045:vaccine",
-			Message: "Hey peter",
-		}).promise();
+		res.status(400).send(`Property 'locations' must be an array of string location IDs eg. ["JAVITS", "JONES", ...]. Possible location IDs are ${allLocations.map(l => l.id).join(", ")}`);
+		return;
 	}
 
-	await browser.close();
-})();
+	const { affectedRows: deletedRows } = await doQuery(sql`DELETE FROM Subscription WHERE Phone=${phone}`);
+
+	for (const locationId of locations)
+		await doQuery(sql`INSERT INTO Subscription (Id, Phone, LocationId) VALUES(${guid()}, ${phone}, ${locationId})`);
+
+	res.status(200).json({ isNew: deletedRows === 0 });
+});
+
+server.delete("/subscription", async (req, res) =>
+{
+	const { phone, } = req.body;
+
+	if (typeof phone !== "string" || phone.match(/^[0-9]{10}$/) == null)
+	{
+		res.status(400).send("Property 'phone' must be a 10-digit string of numbers");
+		return;
+	}
+
+	await doQuery(sql`DELETE FROM Subscription WHERE Phone=${phone}`);
+	res.status(200).send();
+});
+
+
+const port = process.env.PORT || 5000;
+server.listen(port, () => console.log(`Listening on port ${port}`));
+
 

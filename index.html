@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Get alerts for the NY state vaccine</title>
+</head>
+<body>
+	<style>
+		body {
+			font-family: sans-serif;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			margin: 20px;
+		}
+
+		#phone-input-label {
+			text-align: center;
+			margin-top: 40px;
+		}
+
+		#submit-button {
+			font-size: 20px;
+			padding: 0.7em 1.2em;
+			margin-top: 20px;
+			background: transparent;
+			font-family: inherit;
+			border: 1px solid #222222;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		#unsubscribe-button {
+			font-size: 14px;
+			padding: 0.7em 1.2em;
+			margin-top: 40px;
+			background: transparent;
+			font-family: inherit;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+		}
+
+		#unsubscribe-button:hover {
+			text-decoration: underline;
+		}
+
+		#unsubscribe-button:focus {
+			text-decoration: underline;
+			outline: none;
+		}
+
+		#phone-input {
+			border: 1px solid #222222;
+			font-family: inherit;
+			font-size: 20px;
+			padding: 0.4em;
+			text-align: center;
+			border-radius: 4px;
+		}
+
+		#phone-input:valid {
+			border-color: #4caf50;
+		}
+
+		#phone-input:invalid {
+			border-color: #e53935;
+		}
+
+		#locations {
+			display: grid;
+			grid-template-columns: auto auto;
+			justify-items: flex-start;
+			gap: 10px;
+			text-align: left;
+			margin-top: 40px;
+		}
+
+		@media (max-width: 800px) {
+			#locations {
+				grid-template-columns: auto;
+			}
+		}
+
+		.location-label {
+			user-select: none;
+		}
+
+		#message-area {
+			text-align: center;
+    		line-height: 1.4em;
+			font-weight: bold;
+			margin-top: 40px;
+		}
+
+		#instructions {
+			max-width: 480px;
+			line-height: 1.4em;
+		}
+
+		#instructions-header {
+			font-weight: bold;
+		}
+
+		.instruction-strong {
+			font-weight: bold;
+		}
+
+		#footer {
+			font-size: 12px;
+			max-width: 480px;
+			margin-top: 100px;
+    		line-height: 1.5em;
+		}
+	</style>
+	<div id="instructions">
+		<p id="instructions-header">Instructions:</p>
+		<p>
+			Select one or more NY state vaccine distribution locations below, enter your phone number, then click "Sign Up" to
+			be registered to receive a text message when any of the selected locations show vaccine appointment availability as per
+			the <a href="https://virtualqueue4.ny.gov">NY state website</a>.
+		</p>
+		<p><span class="instruction-strong">To update which locations to receive alerts for</span>, simply revisit this page and submit the form with the same phone number.</p>
+		<p><span  class="instruction-strong">To unsubscribe from all alerts</span>, click "Unsubscribe from all existing alerts."</p>
+	</div>
+	<div id="locations"></div>
+	<label id="phone-input-label">
+		<p>Enter your phone number:</p>
+		<input type="tel" id="phone-input" autocomplete="tel" required pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" oninput="onPhoneNumberInput()" maxlength="12">
+	</label>
+	<button type="button" id="submit-button" onclick="onSignupClick()">Sign up</button>
+	<button type="button" id="unsubscribe-button" onclick="onUnsubscribeClick()">Unsubscribe from all existing alerts</button>
+	<p id="message-area" hidden></p>
+	
+	<div id="footer">
+		<p>
+			<strong>Important info</strong>: This website is not affiliated with the state of New York.  Absolutely no warranty is provided for this service, 
+			which I make available as a small contribution to try to help with this huge logistics problem.
+		</p>
+		<p>This service just scrapes the <a href="https://virtualqueue4.ny.gov/">NY State Covid-19 website</a> which does not include other vaccination locations like pharmacies.</p>
+		<p>To report a bug, head over to the <a href="https://github.com/fernap3/ny-vaccine-alert">Github repo</a>.</p>
+	</div>
+
+	<script>
+		const locations = [
+			{ name: "Javits Center", id: "JAVITS", checked: false, },
+			{ name: "Jones Beach - Field 3", id: "JONES", checked: false, },
+			{ name: "State Fair Expo Center: NYS Fairgrounds", id: "FAIR", checked: false, },
+			{ name: "SUNY Albany", id: "ALBANY", checked: false, },
+			{ name: "Westchester County Center", id: "WESTCHESTER", checked: false, },
+			{ name: "SUNY Stony Brook University Innovation and Discovery Center", id: "STONYBROOK", checked: false, },
+			{ name: "SUNY Potsdam Field House", id: "POTSDAM", checked: false, },
+			{ name: "Aqueduct Racetrack - Racing Hall", id: "AQUEDUCT", checked: false, },
+			{ name: "Plattsburgh International Airport -Connecticut Building", id: "PLATTSBURGH", checked: false, },
+			{ name: "SUNY Binghamton", id: "BINGHAMTON", checked: false, },
+			{ name: "SUNY Polytechnic Institute - Wildcat Field House", id: "POLYTECHNIC", checked: false, },
+			{ name: "University at Buffalo South Campus - Harriman Hall", id: "BUFFALO", checked: false, },
+			{ name: "Rochester Dome Arena", id: "ROCHESTER", checked: false, },
+		];
+
+		const locationsRoot = document.getElementById("locations");
+
+		for (const location of locations)
+		{
+			const checkbox = document.createElement("input");
+			checkbox.type = "checkbox";
+			const label = document.createElement("label");
+			label.className = "location-label";
+			label.appendChild(checkbox);
+			label.insertAdjacentText("beforeend", location.name);
+			checkbox.oninput = () => { location.checked = checkbox.checked; };
+			locationsRoot.appendChild(label);
+		}
+		
+		const submitButton = document.getElementById("submit-button");
+		submitButton.onclick = evt => onSignupClick();
+
+		const unsubscribeButton = document.getElementById("unsubscribe-button");
+		unsubscribeButton.onclick = evt => onUnsubscribeClick(evt);
+
+		const phoneInput = document.getElementById("phone-input");
+		phoneInput.oninput = evt => onPhoneNumberInput(evt);
+		phoneInput.onkeydown = evt => { if (evt.key === "Enter") onSignupClick(); };
+		phoneInput.focus();
+
+		const messageArea = document.getElementById("message-area");
+
+		async function onUnsubscribeClick()
+		{
+			if (!phoneInput.checkValidity())
+			{
+				alert("Please fill out the form with your number in 10-digit format, eg. 845-555-4567");
+				return;
+			}
+
+			const phone = phoneInput.value.replace(/-/g, "");
+			const response = await fetch("/subscription", {
+				method: "DELETE",
+				body: JSON.stringify({
+					phone,
+				}),
+				headers: { "Content-Type": "application/json" }
+			});
+
+			if (!response.ok)
+			{
+				alert("There was an error submitting the form. Please contact supersonicandtails@gmail.com");
+				return;
+			}
+
+			submitButton.hidden = true;
+			unsubscribeButton.hidden = true;
+			phoneInput.disabled = true;
+			messageArea.hidden = false;
+			messageArea.innerHTML = "You are now unsubscribed from all alerts.";
+		}
+		
+		async function onSignupClick()
+		{
+			if (!locations.some(l => l.checked))
+			{
+				alert("Please check one or more vaccination locations for which to be alerted.");
+				return;
+			}
+			
+			if (!phoneInput.checkValidity())
+			{
+				alert("Please fill out the form with your number in 10-digit format, eg. 845-555-4567");
+				return;
+			}
+
+			const phone = phoneInput.value.replace(/-/g, "");
+
+			const response = await fetch("/subscription", {
+				method: "POST",
+				body: JSON.stringify({
+					phone,
+					locations: locations.filter(l => l.checked).map(l => l.id),
+				}),
+				headers: { "Content-Type": "application/json" }
+			});
+
+			if (!response.ok)
+			{
+				alert("There was an error submitting the form. Please contact supersonicandtails@gmail.com");
+				return;
+			}
+
+			submitButton.hidden = true;
+			unsubscribeButton.hidden = true;
+			phoneInput.disabled = true;
+			messageArea.hidden = false;
+
+			const body = await response.json();
+
+			if (body.isNew)
+			{
+				messageArea.innerHTML = `All set! We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+			}
+			else
+			{
+				messageArea.innerHTML = `All set! Your preference has been updated.<br>We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+			}
+		}
+
+		function onPhoneNumberInput(evt)
+		{
+			if (phoneInput.value[phoneInput.value.length - 1] === "-")
+				phoneInput.value = phoneInput.value.slice(0, phoneInput.value.length - 1);
+			
+			phoneInput.value = phoneInput.value.replace(/[^0-9\-]/gi, "");
+			phoneInput.value = phoneInput.value.replace(/^([0-9]{3})$/gi, "$1-");
+			phoneInput.value = phoneInput.value.replace(/^([0-9]{3}-[0-9]{3})$/gi, "$1-");
+		}
+	</script>
+</body>
+</html>
