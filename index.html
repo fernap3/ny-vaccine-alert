@@ -139,7 +139,7 @@
 			which I make available as a small contribution to try to help with this huge logistics problem.
 		</p>
 		<p>This service just scrapes the <a href="https://virtualqueue4.ny.gov/">NY State Covid-19 website</a> which does not include other vaccination locations like pharmacies.</p>
-		<p>To report a bug, head over to the <a href="https://github.com/fernap3/ny-vaccine-alert">Github repo</a>.</p>
+		<p>To report a bug or leave feedback, head over to the <a href="https://github.com/fernap3/ny-vaccine-alert">Github repo</a>.</p>
 	</div>
 
 	<script>
@@ -182,7 +182,6 @@
 		const phoneInput = document.getElementById("phone-input");
 		phoneInput.oninput = evt => onPhoneNumberInput(evt);
 		phoneInput.onkeydown = evt => { if (evt.key === "Enter") onSignupClick(); };
-		phoneInput.focus();
 
 		const messageArea = document.getElementById("message-area");
 
