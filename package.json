@@ -1,0 +1,29 @@
+{
+  "name": "ny-vaccine-alert",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fernap3/ny-vaccine-alert.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/fernap3/ny-vaccine-alert/issues"
+  },
+  "homepage": "https://github.com/fernap3/ny-vaccine-alert#readme",
+  "dependencies": {
+    "@fernap3/sql": "^1.2.0",
+    "aws-sdk": "^2.848.0",
+    "body-parser": "^1.19.0",
+    "compression": "^1.7.4",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "get-random-values": "^1.2.2",
+    "puppeteer": "^7.1.0"
+  }
+}

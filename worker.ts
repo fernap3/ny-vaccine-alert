@@ -3,7 +3,7 @@ dotenv.config();
 
 import { launch } from "puppeteer";
 import AWS = require("aws-sdk");
-import { doQuery, sql, getConnection } from "@fernap3/sql";
+import { doQuery, sql, } from "@fernap3/sql";
 
 const sns = new AWS.SNS({
 	region: "us-east-1",
