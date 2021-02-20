@@ -224,79 +224,93 @@
 
 		async function onUnsubscribeClick()
 		{
-			if (!phoneInput.checkValidity())
+			try
 			{
-				alert("Please fill out the form with your number in 10-digit format, eg. 845-555-4567");
-				return;
+				if (!phoneInput.checkValidity())
+				{
+					alert("Please fill out the form with your number in 10-digit format, eg. 845-555-4567");
+					return;
+				}
+
+				const phone = phoneInput.value.replace(/-/g, "");
+				const response = await fetch("/subscription", {
+					method: "DELETE",
+					body: JSON.stringify({
+						phone,
+					}),
+					headers: { "Content-Type": "application/json" }
+				});
+
+				if (!response.ok)
+				{
+					alert("There was an error submitting the form. Please contact supersonicandtails@gmail.com");
+					return;
+				}
+
+				submitButton.hidden = true;
+				unsubscribeButton.hidden = true;
+				phoneInput.disabled = true;
+				messageArea.hidden = false;
+				messageArea.innerHTML = "You are now unsubscribed from all alerts.";
 			}
-
-			const phone = phoneInput.value.replace(/-/g, "");
-			const response = await fetch("/subscription", {
-				method: "DELETE",
-				body: JSON.stringify({
-					phone,
-				}),
-				headers: { "Content-Type": "application/json" }
-			});
-
-			if (!response.ok)
+			catch(e)
 			{
-				alert("There was an error submitting the form. Please contact supersonicandtails@gmail.com");
-				return;
+				alert("There was an unexpected error. We'll try to resolve it as fast as possible; please check back later.");
 			}
-
-			submitButton.hidden = true;
-			unsubscribeButton.hidden = true;
-			phoneInput.disabled = true;
-			messageArea.hidden = false;
-			messageArea.innerHTML = "You are now unsubscribed from all alerts.";
 		}
 		
 		async function onSignupClick()
 		{
-			if (!locations.some(l => l.checked))
+			try
 			{
-				alert("Please check one or more vaccination locations for which to be alerted.");
-				return;
+				if (!locations.some(l => l.checked))
+				{
+					alert("Please check one or more vaccination locations for which to be alerted.");
+					return;
+				}
+				
+				if (!phoneInput.checkValidity())
+				{
+					alert("Please fill out the form with your number in 10-digit format, eg. 845-555-4567");
+					return;
+				}
+
+				const phone = phoneInput.value.replace(/-/g, "");
+
+				const response = await fetch("/subscription", {
+					method: "POST",
+					body: JSON.stringify({
+						phone,
+						locations: locations.filter(l => l.checked).map(l => l.id),
+					}),
+					headers: { "Content-Type": "application/json" }
+				});
+
+				if (!response.ok)
+				{
+					alert("There was an error submitting the form. Please contact supersonicandtails@gmail.com");
+					return;
+				}
+
+				submitButton.hidden = true;
+				unsubscribeButton.hidden = true;
+				phoneInput.disabled = true;
+				messageArea.hidden = false;
+
+				const body = await response.json();
+
+				if (body.isNew)
+				{
+					messageArea.innerHTML = `All set! We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+				}
+				else
+				{
+					messageArea.innerHTML = `All set! Your preference has been updated.<br>We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+				}
 			}
-			
-			if (!phoneInput.checkValidity())
+			catch(e)
 			{
-				alert("Please fill out the form with your number in 10-digit format, eg. 845-555-4567");
-				return;
-			}
-
-			const phone = phoneInput.value.replace(/-/g, "");
-
-			const response = await fetch("/subscription", {
-				method: "POST",
-				body: JSON.stringify({
-					phone,
-					locations: locations.filter(l => l.checked).map(l => l.id),
-				}),
-				headers: { "Content-Type": "application/json" }
-			});
-
-			if (!response.ok)
-			{
-				alert("There was an error submitting the form. Please contact supersonicandtails@gmail.com");
-				return;
-			}
-
-			submitButton.hidden = true;
-			unsubscribeButton.hidden = true;
-			phoneInput.disabled = true;
-			messageArea.hidden = false;
-
-			const body = await response.json();
-
-			if (body.isNew)
-			{
-				messageArea.innerHTML = `All set! We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
-			}
-			else
-			{
-				messageArea.innerHTML = `All set! Your preference has been updated.<br>We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+				alert("There was an unexpected error. We'll try to resolve it as fast as possible; please check back later.");
 			}
 		}
 
