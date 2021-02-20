@@ -69,7 +69,7 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 	const subscriptionsToAlert = await doQuery<{ id: string, phone: string, locationId: string }>(sql`
 		SELECT Id as id, Phone as phone, LocationId as locationId
 		FROM Subscription
-		WHERE LocationId IN (${locationsIdsWithAvailability}) AND AlertSentAt IS NULL
+		WHERE LocationId IN (${locationsIdsWithAvailability}) AND Active AND AlertSentAt IS NULL
 	`);
 
 	for (const subscription of subscriptionsToAlert)
