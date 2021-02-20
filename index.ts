@@ -7,6 +7,14 @@ import bodyParser = require("body-parser");
 import path = require("path");
 import { doQuery, sql, getConnection } from "@fernap3/sql";
 const getRandomValues = require("get-random-values");
+import AWS = require("aws-sdk");
+
+
+const sns = new AWS.SNS({
+	region: "us-east-1",
+	accessKeyId: process.env.AWS_ACCESS_KEY,
+	secretAccessKey: process.env.AWS_SECRET_KEY,
+});
 
 function guid(): string
 {
@@ -71,12 +79,24 @@ server.post("/subscription", async (req, res) =>
 		return;
 	}
 
-	const { affectedRows: deletedRows } = await doQuery(sql`DELETE FROM Subscription WHERE Phone=${phone}`);
+	const { affectedRows } = await doQuery(sql`UPDATE Subscription SET Active = FALSE WHERE Phone=${phone}`);
 
 	for (const locationId of locations)
 		await doQuery(sql`INSERT INTO Subscription (Id, Phone, LocationId) VALUES(${guid()}, ${phone}, ${locationId})`);
 
-	res.status(200).json({ isNew: deletedRows === 0 });
+
+	await sns.publish({
+		PhoneNumber: `+1${phone}`,
+		Message: `Signed up for vaccine alerts. Reply STOP to opt-out.`,
+		MessageAttributes: {
+			"AWS.SNS.SMS.SMSType": {
+				DataType: "String",
+				StringValue: "Transactional"
+			}
+		}
+	}).promise();
+
+	res.status(200).json({ isNew: affectedRows === 0 });
 });
 
 server.delete("/subscription", async (req, res) =>
@@ -89,7 +109,7 @@ server.delete("/subscription", async (req, res) =>
 		return;
 	}
 
-	await doQuery(sql`DELETE FROM Subscription WHERE Phone=${phone}`);
+	await doQuery(sql`UPDATE Subscription SET Active = FALSE WHERE Phone=${phone}`);
 	res.status(200).send();
 });
 

@@ -62,7 +62,7 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 	const subscriptionsToAlert = await doQuery<{ id: string, phone: string, locationId: string }>(sql`
 		SELECT Id as id, Phone as phone, LocationId as locationId
 		FROM Subscription
-		WHERE LocationId IN (${locationsIdsWithAvailability}) AND NOT Alerted
+		WHERE LocationId IN (${locationsIdsWithAvailability}) AND AlertSentAt IS NULL
 	`);
 
 	for (const subscription of subscriptionsToAlert)
@@ -71,7 +71,7 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 		console.log(`Alerting ${subscription.phone} on availability for ${locationName}`);
 		await sns.publish({
 			PhoneNumber: `+1${subscription.phone}`,
-			Message: `Vaccinne appt. availabilty detected for ${locationName}. Check the NY state website.`,
+			Message: `Vaccinne appt. availabilty detected for ${locationName}. Check the NY state website. You won't be alerted again for this location. Reply STOP to opt-out of alerts for any other locations you selected.`,
 			MessageAttributes: {
 				"AWS.SNS.SMS.SMSType": {
 					DataType: "String",
@@ -82,7 +82,7 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 	}
 
 	if (subscriptionsToAlert.length > 0)
-		await doQuery<void>(sql`UPDATE Subscription SET Alerted=1 WHERE Id IN (${subscriptionsToAlert.map(s => s.id)})`);
+		await doQuery<void>(sql`UPDATE Subscription SET AlertSentAt=CURRENT_TIMESTAMP WHERE Id IN (${subscriptionsToAlert.map(s => s.id)})`);
 
 	await browser.close();
 
