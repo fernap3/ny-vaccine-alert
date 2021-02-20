@@ -4,6 +4,7 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Get alerts for the NY state vaccine</title>
+	<meta name="color-scheme" content="dark light">
 </head>
 <body>
 	<style>
@@ -13,6 +14,31 @@
 			flex-direction: column;
 			align-items: center;
 			margin: 20px;
+
+			--color-text: #ced6de;
+			--color-background: #0d1117;
+			--color-button-border: #dddddd;
+
+			color: var(--color-text);
+			background: var(--color-background);
+		}
+
+		@media (prefers-color-scheme: light) {
+			body {
+				--color-text: #222222;
+				--color-background: white;
+				--color-button-border: #656565;
+			}
+		}
+
+		button {
+			color: inherit;
+			font-family: inherit;
+		}
+
+		input[type=tel] {
+			color: inherit;
+			font-family: inherit;
 		}
 
 		#phone-input-label {
@@ -26,7 +52,7 @@
 			margin-top: 20px;
 			background: transparent;
 			font-family: inherit;
-			border: 1px solid #222222;
+			border: 1px solid var(--color-button-border);
 			border-radius: 4px;
 			cursor: pointer;
 		}
@@ -75,6 +101,10 @@
 			gap: 10px;
 			text-align: left;
 			margin-top: 40px;
+		}
+
+		#locations input[type=checkbox] {
+			margin-right: .5em;
 		}
 
 		@media (max-width: 800px) {
