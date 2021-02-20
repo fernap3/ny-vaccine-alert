@@ -24,7 +24,14 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 	const locationIdNameMap = Object.fromEntries(allLocations.map(l => ([l.id, l.displayName])));
 
 	console.log(`Scraping ${url}`)
-	const browser = await launch({ headless: true, ignoreHTTPSErrors: true });
+	const browser = await launch({
+		headless: true,
+		ignoreHTTPSErrors: true,
+		args: [
+			"--no-sandbox",
+			"--disable-setuid-sandbox",
+		],
+	});
 	const page = await browser.newPage();
 
 	await page.goto(url);
