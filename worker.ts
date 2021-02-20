@@ -71,7 +71,13 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 		console.log(`Alerting ${subscription.phone} on availability for ${locationName}`);
 		await sns.publish({
 			PhoneNumber: `+1${subscription.phone}`,
-			Message: `Vaccinne appt. availabilty detected for ${locationName}. Check ${url}`,
+			Message: `Vaccinne appt. availabilty detected for ${locationName}. Check the NY state website.`,
+			MessageAttributes: {
+				"AWS.SNS.SMS.SMSType": {
+					DataType: "String",
+					StringValue: "Transactional"
+				}
+			}
 		}).promise();
 	}
 

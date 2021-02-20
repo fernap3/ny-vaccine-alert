@@ -127,7 +127,7 @@
 	<div id="locations"></div>
 	<label id="phone-input-label">
 		<p>Enter your phone number:</p>
-		<input type="tel" id="phone-input" autocomplete="tel" required pattern="[0-9]{3}-[0-9]{3}-[0-9]{4}" oninput="onPhoneNumberInput()" maxlength="12">
+		<input type="tel" id="phone-input" autocomplete="tel" required pattern="[0-9]{3}-?[0-9]{3}-?[0-9]{4}" oninput="onPhoneNumberInput()" maxlength="12">
 	</label>
 	<button type="button" id="submit-button" onclick="onSignupClick()">Sign up</button>
 	<button type="button" id="unsubscribe-button" onclick="onUnsubscribeClick()">Unsubscribe from all existing alerts</button>
