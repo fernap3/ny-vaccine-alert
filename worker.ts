@@ -45,6 +45,8 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 	const tableRows = await page.$$("#statePods_table > tbody > tr");
 	const locationsOnPage = [] as { locationName: string, available: boolean }[];
 
+	await new Promise<void>(resolve => setTimeout(() => resolve(), 2000));
+
 	for (const tableRow of tableRows)
 	{
 		const placeName = await tableRow.evaluate(row => row.children[0].textContent);
