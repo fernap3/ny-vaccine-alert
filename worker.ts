@@ -16,7 +16,10 @@ async function getAllLocations(): Promise<{id: string, displayName: string}[]>
 	return await doQuery<{ id: string, displayName: string }>(sql`SELECT Id as id, DisplayName as displayName FROM Location`);
 }
 
-const url = "https://virtualqueue4.ny.gov";
+const url = process.env.SCRAPE_URL;
+
+if (!url)
+	throw new Error("Must specify SCRAPE_URL in environment settings");
 
 async function scrapeAndAlert(allLocations: {id: string, displayName: string}[]): Promise<void>
 {
@@ -56,7 +59,7 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 		if (locationsOnPage.find(l => l.locationName === location.displayName) == null)
 		{
 			console.log(JSON.stringify(locationsOnPage))
-			throw new Error(`Location with ID ${location.id} (${location.displayName}) was not found on https://virtualqueue4.ny.gov. Did the web page change?`);
+			throw new Error(`Location with ID ${location.id} (${location.displayName}) was not found on ${url}. Did the web page change?`);
 		}
 	}
 
