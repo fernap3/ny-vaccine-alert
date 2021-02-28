@@ -156,7 +156,7 @@
 		<p>
 			Select one or more NY state vaccine distribution locations below, enter your phone number, then click "Sign Up" to
 			be registered to receive a text message when any of the selected locations show vaccine appointment availability as per
-			the <a href="https://virtualqueue4.ny.gov">NY state website</a>.
+			the <a href="https://am-i-eligible.covid19vaccine.health.ny.gov">NY state website</a>.
 		</p>
 		<p><span class="instruction-strong">To update which locations to receive alerts for</span>, simply revisit this page and submit the form with the same phone number.</p>
 		<p><span  class="instruction-strong">To unsubscribe from all alerts</span>, click "Unsubscribe from all existing alerts."</p>
@@ -175,7 +175,7 @@
 			<strong>Important info</strong>: This website is not affiliated with the state of New York.  Absolutely no warranty is provided for this service, 
 			which I make available as a small contribution to try to help with this huge logistics problem.
 		</p>
-		<p>This service just scrapes the <a href="https://virtualqueue4.ny.gov/">NY State Covid-19 website</a> which does not include other vaccination locations like pharmacies.</p>
+		<p>This service just scrapes the <a href="https://am-i-eligible.covid19vaccine.health.ny.gov">NY State Covid-19 website</a> which does not include other vaccination locations like pharmacies.</p>
 		<p>To report a bug or leave feedback, head over to the <a href="https://github.com/fernap3/ny-vaccine-alert">Github repo</a>.</p>
 	</div>
 
@@ -301,11 +301,11 @@
 
 				if (body.isNew)
 				{
-					messageArea.innerHTML = `All set! We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+					messageArea.innerHTML = `All set! We'll text you when we detect that the <a href="https://am-i-eligible.covid19vaccine.health.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
 				}
 				else
 				{
-					messageArea.innerHTML = `All set! Your preference has been updated.<br>We'll text you when we detect that the <a href="https://virtualqueue4.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
+					messageArea.innerHTML = `All set! Your preference has been updated.<br>We'll text you when we detect that the <a href="https://am-i-eligible.covid19vaccine.health.ny.gov">NY state website</a> shows one of your specified locations as having appointment availablity.`;
 				}
 			}
 			catch(e)
