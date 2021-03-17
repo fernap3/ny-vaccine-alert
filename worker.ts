@@ -50,9 +50,9 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 	for (const tableRow of tableRows)
 	{
 		const placeName = await tableRow.evaluate(row => row.children[0].textContent);
-		const appointmentsAvailableText = await tableRow.evaluate(row => row.children[2].textContent);
+		const appointmentsAvailableText = await tableRow.evaluate(row => row.children[3].textContent);
 		
-		locationsOnPage.push({ locationName: placeName.trim(), available: appointmentsAvailableText?.toLowerCase()?.trim() === "appointments available" })
+		locationsOnPage.push({ locationName: placeName.trim(), available: appointmentsAvailableText?.toLowerCase()?.trim() === "yes" })
 	}
 
 	for (const location of allLocations)
@@ -70,31 +70,33 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 		.map(l => l.locationName)
 		.map(locationName => locationNameIdMap[locationName]);
 
-
-	const subscriptionsToAlert = await doQuery<{ id: string, phone: string, locationId: string }>(sql`
-		SELECT Id as id, Phone as phone, LocationId as locationId
-		FROM Subscription
-		WHERE LocationId IN (${locationsIdsWithAvailability}) AND Active AND AlertSentAt IS NULL
-	`);
-
-	for (const subscription of subscriptionsToAlert)
+	if (locationsIdsWithAvailability.length > 0)
 	{
-		const locationName = locationIdNameMap[subscription.locationId];
-		console.log(`Alerting ${subscription.phone} on availability for ${locationName}`);
-		await sns.publish({
-			PhoneNumber: `+1${subscription.phone}`,
-			Message: `Vaccinne appt. availabilty detected for ${locationName}. Check the NY state website. You won't be alerted again for this location. Reply STOP to opt-out of alerts for any other locations you selected.`,
-			MessageAttributes: {
-				"AWS.SNS.SMS.SMSType": {
-					DataType: "String",
-					StringValue: "Transactional"
-				}
-			}
-		}).promise();
-	}
+		const subscriptionsToAlert = await doQuery<{ id: string, phone: string, locationId: string }>(sql`
+			SELECT Id as id, Phone as phone, LocationId as locationId
+			FROM Subscription
+			WHERE LocationId IN (${locationsIdsWithAvailability}) AND Active AND AlertSentAt IS NULL
+		`);
 
-	if (subscriptionsToAlert.length > 0)
-		await doQuery<void>(sql`UPDATE Subscription SET AlertSentAt=CURRENT_TIMESTAMP WHERE Id IN (${subscriptionsToAlert.map(s => s.id)})`);
+		for (const subscription of subscriptionsToAlert)
+		{
+			const locationName = locationIdNameMap[subscription.locationId];
+			console.log(`Alerting ${subscription.phone} on availability for ${locationName}`);
+			await sns.publish({
+				PhoneNumber: `+1${subscription.phone}`,
+				Message: `Vaccinne appt. availabilty detected for ${locationName}. Check the NY state website. You won't be alerted again for this location. Reply STOP to opt-out of alerts for any other locations you selected.`,
+				MessageAttributes: {
+					"AWS.SNS.SMS.SMSType": {
+						DataType: "String",
+						StringValue: "Transactional"
+					}
+				}
+			}).promise();
+		}
+
+		if (subscriptionsToAlert.length > 0)
+			await doQuery<void>(sql`UPDATE Subscription SET AlertSentAt=CURRENT_TIMESTAMP WHERE Id IN (${subscriptionsToAlert.map(s => s.id)})`);
+	}
 
 	await browser.close();
 
