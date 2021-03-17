@@ -92,6 +92,8 @@ async function scrapeAndAlert(allLocations: {id: string, displayName: string}[])
 					}
 				}
 			}).promise();
+
+			await new Promise<void>(resolve => setTimeout(() => resolve(), 1000));
 		}
 
 		if (subscriptionsToAlert.length > 0)
